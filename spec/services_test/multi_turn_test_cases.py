@@ -28,7 +28,7 @@ test_cases = [
             ],
             "threshold": 0.80
             },{
-            "utterance": "How much for a 2.5mg program for Sema?",
+            "utterance": "I am in Texas",
             "valid_responses": [
             "For a 2.5mg program of Semaglutide in Texas, the price is $499. This program includes a vial size of 5ml with a dosage of 100 units over 5 weeks. If you are interested in longer programs for the 2.5mg please let us kno    w. Would you like to book an appointment or need further assistance?"
             ],

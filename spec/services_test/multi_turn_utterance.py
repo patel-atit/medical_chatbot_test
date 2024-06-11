@@ -27,51 +27,41 @@ def fetch_chatbot_response(api_url, message):
 
 def run_multi_turn_test_cases(test_cases, api_url, test_indices=None):
     results = []
-    if test_indices is None:
-        selected_cases = test_cases
-    else:
-        selected_cases = [test_cases[i] for i in test_indices if i < len(test_cases)]
+    for case in test_cases:
+        for step in case['dialog']:
+            chat_response = fetch_chatbot_response(api_url, step['utterance'])
+            chat_vec = get_sentence_embedding(chat_response)
+            highest_similarity = 0
+            best_match_response = None
 
-    for case in selected_cases:
-        conversation_result = []
-        try:
-            for step in case['dialog']:
-                chat_response = fetch_chatbot_response(api_url, step['utterance'])
-                chat_vec = get_sentence_embedding(chat_response)
-                threshold = step.get('threshold', 0.75)  # Default threshold
-                valid_response_found = False
+            for valid_response in step['valid_responses']:
+                valid_vec = get_sentence_embedding(valid_response)
+                similarity = cosine_similarity(chat_vec, valid_vec)
+                if similarity > highest_similarity:
+                    highest_similarity = similarity
+                    best_match_response = valid_response  # Update the best match response
 
-                for valid_response in step['valid_responses']:
-                    valid_vec = get_sentence_embedding(valid_response)
-                    similarity = cosine_similarity(chat_vec, valid_vec)
-                    if similarity >= threshold:
-                        valid_response_found = True
-                        conversation_result.append((step['utterance'], chat_response, True, similarity))
-                        break
-                
-                if not valid_response_found:
-                    conversation_result.append((step['utterance'], chat_response, False, 0))
-                    break  # Stop the test if any response fails to meet the threshold
-
-        except Exception as e:
-            conversation_result.append((step['utterance'], str(e), False, 0))
-        
-        results.append(conversation_result)
+            results.append({
+                'utterance': step['utterance'],
+                'chat_response': chat_response,
+                'expected_response': best_match_response,
+                'similarity_score': highest_similarity,
+                'passed': highest_similarity >= step.get('threshold', 0.75)
+            })
     return results
 
-def main(test_indices=None):
+def main():
     api_url = 'http://localhost:5001/chatbot'
-    test_results = run_multi_turn_test_cases(test_cases, api_url, test_indices)
+    test_results = run_multi_turn_test_cases(test_cases, api_url)
 
-    for dialog_result in test_results:
-        for result in dialog_result:
-            print("Utterance:", result[0])
-            print("Response:", result[1])
-            print("Passed:", "Yes" if result[2] else "No")
-            print("Similarity Score:", f"{result[3]:.2f}")
-            print("------")
+    for result in test_results:
+        print(f"Utterance: {result['utterance']}")
+        print(f"Chat Response: {result['chat_response']}")
+        print(f"Expected Response: {result['expected_response']}")
+        print(f"Similarity Score: {result['similarity_score']:.2f}")
+        print(f"Passed: {'Yes' if result['passed'] else 'No'}")
+        print("------")
 
 if __name__ == "__main__":
-    # Example of running specific test cases: main([0]) to run the first test case only
-    # To run all test cases, just call main() or main([])
-    main([2])
+    main()
+
