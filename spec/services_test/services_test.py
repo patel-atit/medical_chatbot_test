@@ -6,8 +6,8 @@ def get_similarity_score(a, b):
 
 def test_conversational_ai():
     url = 'http://localhost:5001/chatbot'
-    data = {'message': 'Hello, how are you?'}
-    expected_response = 'I\'m here and ready to assist you. How can I help'
+    data = {'message': 'What services do you offer?'}
+    expected_response = 'We offer Semaglutide & Tirzepatide all over the US! Is there one you are more interested in learning about? And what state do you reside in? That way we can make sure to give you accurate pricing!'
 
     try:
         response = requests.post(url, json=data)
